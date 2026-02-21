@@ -3,7 +3,6 @@ import sqlite3
 
 app = Flask(__name__)
 
-# Vytvorenie databázy
 def init_db():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
@@ -80,7 +79,10 @@ form_html = """
 
             <button type="submit">Register</button>
         </form>
-        {message}
+
+        {% if message %}
+            <p class="success">{{ message }}</p>
+        {% endif %}
     </div>
 </body>
 </html>
@@ -88,7 +90,7 @@ form_html = """
 
 @app.route("/", methods=["GET", "POST"])
 def register():
-    message = ""
+    message = None
 
     if request.method == "POST":
         name = request.form["name"]
@@ -100,9 +102,9 @@ def register():
         conn.commit()
         conn.close()
 
-        message = "<p class='success'>User successfully registered! 🎉</p>"
+        message = "User successfully registered! 🎉"
 
-    return render_template_string(form_html.format(message=message))
+    return render_template_string(form_html, message=message)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
