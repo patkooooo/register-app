@@ -31,9 +31,10 @@ init_db()
 @app.route("/", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        name = request.form["name"]
-        email = request.form["email"]
-        ip = request.remote_addr
+    name = request.form["name"]
+    email = request.form["email"]
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         created_at = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
         conn = sqlite3.connect("users.db")
