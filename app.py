@@ -8,7 +8,7 @@ ADMIN_PASSWORD = "admin123"
 
 
 def init_db():
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -53,7 +53,7 @@ def register():
         forwarded_for = request.headers.get("X-Forwarded-For", request.remote_addr)
         ip = forwarded_for.split(",")[0].strip()
 
-        conn = sqlite3.connect("users.db")
+        conn = sqlite3.connect("/tmp/users.db")
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO users (name, email, ip) VALUES (?, ?, ?)",
@@ -80,7 +80,7 @@ def users():
     if not session.get("admin"):
         return "Access denied ❌"
 
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("/tmp/users.db")
     cursor = conn.cursor()
     cursor.execute("SELECT name, email, ip FROM users")
     all_users = cursor.fetchall()
