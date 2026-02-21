@@ -51,7 +51,7 @@ def register():
         email = request.form["email"]
 
         forwarded_for = request.headers.get("X-Forwarded-For", request.remote_addr)
-ip = forwarded_for.split(",")[0].strip()
+        ip = forwarded_for.split(",")[0].strip()
 
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
