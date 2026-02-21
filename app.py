@@ -1,6 +1,23 @@
 from flask import Flask, request, render_template_string
+import sqlite3
 
 app = Flask(__name__)
+
+# Vytvorenie databázy
+def init_db():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 form_html = """
 <!DOCTYPE html>
@@ -44,6 +61,11 @@ form_html = """
         button:hover {
             background: #45a049;
         }
+        .success {
+            color: green;
+            text-align: center;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +80,7 @@ form_html = """
 
             <button type="submit">Register</button>
         </form>
+        {message}
     </div>
 </body>
 </html>
@@ -65,12 +88,21 @@ form_html = """
 
 @app.route("/", methods=["GET", "POST"])
 def register():
+    message = ""
+
     if request.method == "POST":
         name = request.form["name"]
         email = request.form["email"]
-        return f"<h2>Thanks {name}! You registered with {email} 🎉</h2>"
 
-    return render_template_string(form_html)
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users (name, email) VALUES (?, ?)", (name, email))
+        conn.commit()
+        conn.close()
+
+        message = "<p class='success'>User successfully registered! 🎉</p>"
+
+    return render_template_string(form_html.format(message=message))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
