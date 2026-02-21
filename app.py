@@ -1,29 +1,36 @@
 from flask import Flask, request, render_template_string, redirect, session
-import sqlite3
+import os
+import psycopg2
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey123"
 
 ADMIN_PASSWORD = "admin123"
 
+# --- DATABASE ---
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
 
 def init_db():
-    conn = sqlite3.connect("/tmp/users.db")
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
             email TEXT NOT NULL,
             ip TEXT NOT NULL
-        )
+        );
     """)
     conn.commit()
+    cursor.close()
     conn.close()
 
 init_db()
 
-
+# --- HTML ---
 form_html = """
 <h2>Register</h2>
 <form method="POST">
@@ -43,7 +50,7 @@ login_html = """
 </form>
 """
 
-
+# --- ROUTES ---
 @app.route("/", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -53,17 +60,17 @@ def register():
         forwarded_for = request.headers.get("X-Forwarded-For", request.remote_addr)
         ip = forwarded_for.split(",")[0].strip()
 
-        conn = sqlite3.connect("/tmp/users.db")
+        conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO users (name, email, ip) VALUES (?, ?, ?)",
+            "INSERT INTO users (name, email, ip) VALUES (%s, %s, %s)",
             (name, email, ip)
         )
         conn.commit()
+        cursor.close()
         conn.close()
 
     return render_template_string(form_html)
-
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin_login():
@@ -74,16 +81,16 @@ def admin_login():
 
     return render_template_string(login_html)
 
-
 @app.route("/users")
 def users():
     if not session.get("admin"):
         return "Access denied ❌"
 
-    conn = sqlite3.connect("/tmp/users.db")
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT name, email, ip FROM users")
     all_users = cursor.fetchall()
+    cursor.close()
     conn.close()
 
     html = "<h2>Registered Users</h2><ul>"
@@ -93,12 +100,10 @@ def users():
 
     return html
 
-
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run()
