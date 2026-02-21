@@ -1,21 +1,36 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
-@app.route("/")
-def home():
-    return "Server is running 🚀"
+form_html = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>Registration Form</h2>
+    <form method="POST">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
 
-@app.route("/register", methods=["POST"])
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <button type="submit">Register</button>
+    </form>
+</body>
+</html>
+"""
+
+@app.route("/", methods=["GET", "POST"])
 def register():
-    data = request.json
-    username = data.get("username")
-    password = data.get("password")
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        return f"<h2>Thanks {name}! You registered with {email} 🎉</h2>"
 
-    return jsonify({
-        "message": "User received",
-        "username": username
-    })
+    return render_template_string(form_html)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(debug=True)
