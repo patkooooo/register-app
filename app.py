@@ -106,5 +106,25 @@ def register():
 
     return render_template_string(form_html, message=message)
 
+@app.route("/users")
+def users():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, email FROM users")
+    all_users = cursor.fetchall()
+    conn.close()
+
+    html = """
+    <h2>Registered Users</h2>
+    <ul>
+    """
+    
+    for user in all_users:
+        html += f"<li>{user[0]} - {user[1]}</li>"
+    
+    html += "</ul><br><a href='/'>Back</a>"
+    
+    return html
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
